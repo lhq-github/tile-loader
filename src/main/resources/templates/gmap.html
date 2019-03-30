@@ -10,15 +10,19 @@ html, body, .map{
 	margin: 0;
 	overflow: hidden;
 }
+#message {
+    position: absolute;
+    left: 5px;
+    top: 5px;
+    color: red;
+}
 </style>
 </head>
 <body>
-
 <div id="gmap" class="map"></div>
-	
+<div id="message">谷歌地图请自备梯子</div>
 <script src="/tile-loader/lib/jquery-2.2.4/jquery.min.js"></script>
 <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?v=3.32&key=AIzaSyBVMVToDKxw5f-6MKjIHEbV_TxH-fmvmIg&libraries=drawing,places"></script>
-
 <script src="/tile-loader/js/commons/gmap/textToolkit.js"></script>
 <script src="/tile-loader/js/gmap.js"></script>
 </body>

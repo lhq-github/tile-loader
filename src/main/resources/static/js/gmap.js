@@ -1,6 +1,4 @@
-/**
- * 
- */
+
 var initData = {
 	type: 'gmap',
 	northwest: {
@@ -15,7 +13,6 @@ var initData = {
 var map, polygon, downText;
 
 $(function(){
-	
 	map = new google.maps.Map(document.getElementById('gmap'), {
 		center: {
 			lat: 39.908935,
@@ -35,12 +32,10 @@ $(function(){
 		fullscreenControl: false,
 		scaleControl: true
 	});
-	
-	window.parent.setAllowZooms(1, 20);
+	window.parent.setAllowZooms(1, 21);
 })
 
 function clickTree(treeNode) {
-	
 	$.post('https://restapi.amap.com/v3/config/district',{
 		keywords: treeNode.oldname? treeNode.oldname : treeNode.name,
 		subdistrict: 0,

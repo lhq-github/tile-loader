@@ -1,6 +1,4 @@
-/**
- * 
- */
+
 var initData = {
 	type: 'bmap',
 	northwest: {

@@ -1,6 +1,3 @@
-/**
- * 
- */
 
 //layui组件
 var lay = {};
@@ -25,17 +22,15 @@ var downloadParam = {
 	}
 }
 
-
 $(function() {
-
+	// 默认加装高德地图
+	$('iframe').attr('src', 'amap/index');
 	// 地图切换
 	$('.changeMap').on('click', function() {
 		$('iframe').attr('src', $(this).attr('data-mapurl'));
 	})
-	
 	// 初始化树列表
 	initZtree();
-
 	//设置下载路径
 	$('.setPath').on('click', function() {
 		lay.layer.open({
@@ -188,7 +183,6 @@ function calculateCount() {
 	}
 }
 
-
 //设置下载参数
 function setDownloadparam() {
 	var win = $('iframe')[0].contentWindow;
@@ -206,11 +200,9 @@ function setDownloadparam() {
 	downloadParam.path = $('input[name="path"]').val();
 }
 
-
 //下载
 function download() {
 	setDownloadparam();
-	
 	if(downloadParam.zooms.length == 0) {
 		lay.layer.alert('请选择下载级别');  
 		return;
@@ -219,7 +211,6 @@ function download() {
 		lay.layer.alert('请选择下载路径');  
 		return;
 	}
-	
 	var data = {
 		type: downloadParam.type,
 		path: downloadParam.path,
@@ -227,7 +218,6 @@ function download() {
 		northwest: downloadParam.northwest,
 		southeast: downloadParam.southeast
 	}
-	
 	$.ajax({
 		type: 'post',
 		url: '/tile-loader/map/startDownload',
@@ -235,28 +225,31 @@ function download() {
 		data: JSON.stringify(data),
 		success: function(data) {
 			ResultHandler.successNoTip(data, function(data) {
-				$(".downloadTask").append(
-					'<div style="margin: 4px;">' +
-						'<div style="float: left;">任务:</div>' +
-						'<div class="layui-progress layui-progress-big" lay-showPercent="yes" lay-filter="_'+data.result+'" style="width: 50%; float: left; margin-top: 2px;margin-left: 5px;">' +
-							'<div class="layui-progress-bar" lay-percent="0"></div>' +
-						'</div>' +
-						'<div class="layui-btn-group" style="float: none; margin-left: 10px;">' +
-							'<button class="layui-btn layui-btn-xs start" data-id="'+data.result+'" style="cursor: pointer; display: none;">开始</button>' +
-							'<button class="layui-btn layui-btn-xs pause" data-id="'+data.result+'" style="cursor: pointer;">暂停</button>' +
-							'<button class="layui-btn layui-btn-xs stop" data-id="'+data.result+'" style="cursor: pointer;">停止</button>' +
-							'<button class="layui-btn layui-btn-xs remove" data-id="'+data.result+'" style="cursor: pointer; display: none;">移除</button>' +
-						'</div>' +
-					'</div>'
-				);
-				lay.element.render();
+				addTaskList(data.result);
 			})
-			
 		}
 	})
 }						
+// 添加下载任务列表
+function addTaskList(id) {
+	$(".downloadTask").append(
+		'<div id="_'+id+'" style="margin: 4px;">' +
+			'<div style="float: left;">任务:</div>' +
+			'<div class="layui-progress layui-progress-big" lay-showPercent="yes" lay-filter="_'+id+'" style="width: 50%; float: left; margin-top: 2px;margin-left: 5px;">' +
+				'<div class="layui-progress-bar" lay-percent="0"></div>' +
+			'</div>' +
+			'<div class="layui-btn-group" style="float: none; margin-left: 10px;">' +
+				'<button class="layui-btn layui-btn-xs start" data-id="'+id+'" style="cursor: pointer; display: none;">开始</button>' +
+				'<button class="layui-btn layui-btn-xs pause" data-id="'+id+'" style="cursor: pointer;">暂停</button>' +
+				'<button class="layui-btn layui-btn-xs stop" data-id="'+id+'" style="cursor: pointer;">停止</button>' +
+				'<button class="layui-btn layui-btn-xs remove" data-id="'+id+'" style="cursor: pointer; display: none;">移除</button>' +
+			'</div>' +
+		'</div>'
+	);
+	lay.element.render();
+}
 
-//定时器，同步瓦片下载进度
+//定时器，同步瓦片下载进度，每秒同步一次
 setInterval(function() {
 	$.ajax({
 		type: 'post',
@@ -264,6 +257,11 @@ setInterval(function() {
 		success: function(data) {
 			ResultHandler.successNoTip(data, function(data) {
 				for(var i in data.result) {
+					var state = data.result[i]['STATE'];
+					// 页面刷新后，重现渲染下载列表
+					if($('#_'+i).length == 0 && state != 2) {
+						addTaskList(i);
+					}
 					var progress = data.result[i]['CURRENT'] / data.result[i]['COUNT'];
 					if(!isNaN(progress)) {
 						progress = Math.floor(progress * 100) / 100 
@@ -272,7 +270,20 @@ setInterval(function() {
 						}
 						lay.element.progress('_'+i, progress * 100 + '%');
 						
-						if(data.result[i]['CURRENT'] == data.result[i]['COUNT']) {
+						// 开始状态
+						if(state == 0) {
+							$('.downloadTask').find('.start[data-id="'+i+'"]').hide();
+							$('.downloadTask').find('.pause[data-id="'+i+'"]').show();
+							$('.downloadTask').find('.stop[data-id="'+i+'"]').show();
+							$('.downloadTask').find('.remove[data-id="'+i+'"]').hide();
+						// 暂停状态
+						} else if(state == 1) {
+							$('.downloadTask').find('.start[data-id="'+i+'"]').show();
+							$('.downloadTask').find('.pause[data-id="'+i+'"]').hide();
+							$('.downloadTask').find('.stop[data-id="'+i+'"]').show();
+							$('.downloadTask').find('.remove[data-id="'+i+'"]').hide();
+						// 停止状态
+						} else {
 							$('.downloadTask').find('.start[data-id="'+i+'"]').hide();
 							$('.downloadTask').find('.pause[data-id="'+i+'"]').hide();
 							$('.downloadTask').find('.stop[data-id="'+i+'"]').hide();

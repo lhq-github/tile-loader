@@ -1,0 +1,4 @@
+原百度地图图片下载地址：http://api.map.baidu.com/images/spotmkrs.png
+百度地图AK：B0w20rQcZjtatSYyOFdqkqseTECApgG7
+
+http://api.map.baidu.com/images/navigation-control/geolocation-control/pc/bg-20x20.png

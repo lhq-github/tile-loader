@@ -1,0 +1,21 @@
+
+server:
+   port: 10080
+   tomcat:
+      uri-encoding: UTF-8
+   servlet:
+      context-path: /tile-loader
+
+config:
+   maxTask: 3      #最大支持的下载任务数量
+   retryNum: 3     #同一个瓦片，下载失败后最大重试次数
+   downloader:
+      oneNum: 10   #多线程下载时，每个线程一次下载瓦片数量
+   baseUrl:        #瓦片下载地址
+      amap: "http://wprd01.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scl=1&style=7&x={x}&y={y}&z={z}"
+      bmap: "http://online3.map.bdimg.com/onlinelabel/?qt=tile&styles=pl&udt=20170712&scaler=1&p=1&x={x}&y={y}&z={z}"
+      gmap: "http://mt2.google.cn/vt/lyrs=m&scale=2&hl=zh-CN&gl=cn&x={x}&y={y}&z={z}"     
+   pool:           #下载器线程池
+      coreSize: 2   #核心线程数
+      maxSize: 6    #最大线程数
+      queueSize: 2  #等待线程数

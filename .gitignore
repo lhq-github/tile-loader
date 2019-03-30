@@ -1,0 +1,11 @@
+/.gradle/
+/gradle/
+/bin/
+/build/
+/.settings/
+/transaction-logs/
+
+.classpath
+.project
+
+*.md.html

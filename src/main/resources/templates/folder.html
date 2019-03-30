@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>选择路径</title>
+<meta name="renderer" content="webkit">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<link rel="stylesheet" href="/tile-loader/lib/layui-2.3.0/css/layui.css">
+<style type="text/css">
+html, body {
+	width: 100%;
+	height: 100%;
+ 	padding: 0;
+ 	margin: 0;
+ 	overflow: auto;
+}
+.homePath:hover {
+	color: blue;
+}
+.currentPath span {
+	cursor: pointer;
+}
+.currentPath span:hover {
+	color: blue;
+}
+</style>
+</head>
+<body>
+
+<div class="layui-fluid" style="height: 95%; padding: 0">
+	<div class="layui-row">
+		<div class="layui-col-md12">
+			<table class="layui-table">
+				<colgroup>
+      				<col width="150">
+				</colgroup>
+				<thead>
+					<tr>
+						<th>
+							&nbsp;<i class="layui-icon layui-icon-home homePath" style="cursor: pointer;"></i>&nbsp;
+							当前路径：&nbsp;
+							<div class="currentPath" data-path="" style="display: inline;">
+							</div>
+						</th>
+					</tr> 
+				</thead>
+				<tbody>
+					
+				</tbody>
+			</table>
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript" src="/tile-loader/lib/jquery-2.2.4/jquery.min.js"></script>
+<script type="text/javascript" src="/tile-loader/lib/layui-2.3.0/layui.all.js"></script>
+<script type="text/javascript" src="/tile-loader/js/commons/toolkit/resultHandler.js"></script>
+
+<script type="text/javascript">
+var lay = {};
+layui.use(['form', 'element', 'layer'], function(){
+	lay.form = layui.form;
+	lay.element = layui.element;
+	lay.layer = layui.layer;
+})
+
+$(function() {
+	loadSystemPath('');
+	
+	$('tbody').on('click', 'tr', function() {
+		var currentPath = $('.currentPath').attr('data-path');
+		var val = $(this).children('td').text();
+		if(currentPath) {
+			$('.currentPath').attr('data-path', currentPath + val + '\\');
+		} else {
+			$('.currentPath').attr('data-path', val + '\\');
+		}
+		loadSystemPath($('.currentPath').attr('data-path'));
+	})
+	
+	$('.homePath').on('click', function() {
+		$('.currentPath').attr('data-path', '');
+		loadSystemPath('');
+	})
+	
+	$('.currentPath').on('click', 'span', function() {
+		$('.currentPath').attr('data-path', $(this).attr('data-tempPath'));
+		loadSystemPath($(this).attr('data-tempPath'));
+	})
+	
+})
+
+function loadSystemPath(currentPath) {
+	$.ajax({
+		type: 'post',
+		url: '/tile-loader/map/listFolder',
+		data: {
+			currentPath: currentPath,
+		},
+		success: function(data) {
+			var successFunc = function(data) {
+				var html = [];
+	            for(var i in data.result) {
+	                html.push(
+	                    '<tr>' +
+	                        '<td>'+data.result[i]+'</td>' +
+	                    '</tr>'
+	                );
+	            }
+	            $('tbody').empty().append(html.join(''));
+	            
+	            html = [];
+	            if(currentPath) {
+	                var paths = currentPath.split('\\');
+	                var tempPath = '';
+	                for(var i in paths) {
+	                    if(paths[i]) {
+	                        tempPath += paths[i] + '\\';
+	                        html.push(
+	                            '<span data-tempPath="'+tempPath+'">'+paths[i]+'</span>&nbsp;\\&nbsp;'
+	                        );
+	                    }
+	                }
+	                $('.currentPath').empty().append(html.join(''));
+	            } else {
+	                $('.currentPath').empty();
+	            }
+			}
+			
+			ResultHandler.successNoTip(data, successFunc);
+		}
+	})
+}
+
+
+</script>
+</body>
+</html>

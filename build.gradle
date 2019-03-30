@@ -1,0 +1,38 @@
+buildscript {
+    ext {
+        springBootVersion = '2.0.8.RELEASE';
+    }
+    repositories {
+        maven{ url "http://maven.aliyun.com/nexus/content/groups/public/" }
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+
+group = 'com.lhq.loader'
+version = ''
+description = '地图瓦片下载器'
+sourceCompatibility = 1.8
+
+
+repositories {
+    maven{ url "http://maven.aliyun.com/nexus/content/groups/public/" }
+}
+
+dependencies {
+    implementation('org.springframework.boot:spring-boot-starter-web')
+    implementation('org.springframework.boot:spring-boot-starter-thymeleaf')
+    implementation('org.springframework.boot:spring-boot-devtools')
+    implementation('com.google.code.gson:gson:2.8.5')
+    implementation('org.apache.httpcomponents:httpclient:4.5.6')
+    implementation('org.apache.httpcomponents:fluent-hc:4.5.6')
+   
+    implementation('org.apache.commons:commons-lang3:3.7')
+    
+}

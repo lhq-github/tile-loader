@@ -1,6 +1,3 @@
-/**
- * 
- */
 
 var initData = {
 	type : 'amap',

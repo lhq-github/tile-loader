@@ -1,25 +1,36 @@
 package com.lhq.loader.controller;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.mongodb.MongoDbFactory;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.gridfs.GridFsCriteria;
+import org.springframework.data.mongodb.gridfs.GridFsOperations;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.lhq.loader.bean.Tile;
 import com.lhq.loader.commons.DownloadProgress;
 import com.lhq.loader.commons.bean.ResultData;
 import com.lhq.loader.controller.vo.DownloadParamVO;
 import com.lhq.loader.exception.BaseException;
 import com.lhq.loader.service.IMapService;
+import com.mongodb.client.gridfs.GridFSBuckets;
+import com.mongodb.client.gridfs.model.GridFSFile;
 
 @RestController
 @RequestMapping("/map")
@@ -37,7 +48,25 @@ public class MapController {
     private IMapService bmapService;
     @Autowired
     private IMapService gmapService;
-	
+    @Autowired
+    private GridFsOperations gridFsTemplate;
+    @Autowired
+    private MongoDbFactory mongoDbFactory;
+
+    /**
+     * 当使用mongo存储瓦片时，查看瓦片
+     * 
+     * @param response
+     * @throws IOException
+     */
+    @GetMapping("/viewTile")
+    public void viewTile(Tile tile, HttpServletResponse response) throws IOException {
+        Query query = new Query();
+        query.addCriteria(GridFsCriteria.whereFilename().is(tile.getZoom() + "_" + tile.getX() + "_" + tile.getY() + ".png"));
+        GridFSFile gridFSFile = gridFsTemplate.findOne(query);
+        GridFSBuckets.create(mongoDbFactory.getDb()).downloadToStream(gridFSFile.getId(), response.getOutputStream());
+    }
+
     /**
      * 计算瓦片数量
      * 
@@ -140,7 +169,6 @@ public class MapController {
     public ResultData<Map<String, Map<String, Long>>> getProgress() {
         return new ResultData<Map<String, Map<String, Long>>>().success(downloadProgress);
     }
-	
 	
     /**
      * 获取地图服务类别

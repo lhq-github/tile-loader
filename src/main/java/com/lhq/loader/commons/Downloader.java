@@ -1,6 +1,7 @@
 package com.lhq.loader.commons;
 
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
@@ -11,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.mongodb.gridfs.GridFsOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
@@ -26,8 +28,12 @@ public class Downloader {
 
     @Value("${config.retryNum}")
     private int retryNum;
+    @Value("${config.store.mongo}")
+    private boolean mongoStore;
     @Autowired
     private DownloadProgress downloadProgress;
+    @Autowired
+    private GridFsOperations gridFsTemplate;
 
     @Async("downloaderExecutor")
     public void download(List<String> urls, List<String> fileNames, String id) {
@@ -42,7 +48,7 @@ public class Downloader {
                     String url = urls.get(i);
                     String fileName = fileNames.get(i);
                     try {
-                        downloadFile(url, fileName);
+                        this.downloadFile(url, fileName);
                     } catch (Exception e) {
                         if (retry == retryNum) {
                             logger.info("{}下载失败:{}", fileName, url);
@@ -74,9 +80,13 @@ public class Downloader {
     private void downloadFile(String url, String fileName) throws Exception {
 //        Thread.sleep(1000);
 //        logger.info("{}下载路径:{}", fileName, url);
-		byte[] content = Request.Get(url).connectTimeout(5000).socketTimeout(5000).execute().returnContent().asBytes();
-        try (BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(new File(fileName)))) {
-            out.write(content);
+        byte[] content = Request.Get(url).connectTimeout(5000).socketTimeout(5000).execute().returnContent().asBytes();
+        if (mongoStore) {
+            gridFsTemplate.store(new ByteArrayInputStream(content), fileName);
+        } else {
+            try (BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(new File(fileName)))) {
+                out.write(content);
+            }
         }
 	}
 }

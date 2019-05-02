@@ -31,6 +31,7 @@ public class MapServiceToolkit {
     private static Downloader downloader;
     private static DownloadProgress downloadProgress;
     private static int oneNun;
+    private static boolean useMongoStore = true;
 
     /**
      * 计算下载的瓦片数量
@@ -75,10 +76,10 @@ public class MapServiceToolkit {
         int minY = 0;
         int maxX = 0;
         int maxY = 0;
-        StringBuilder sb = new StringBuilder();
         File folder = null;
         String fileName;
         String url;
+        StringBuilder sb = new StringBuilder();
         List<String> fileNames = new ArrayList<>();
         List<String> urls = new ArrayList<>();
 
@@ -94,14 +95,21 @@ public class MapServiceToolkit {
 
             for (int x = minX; x <= maxX; x++) {
                 sb.setLength(0);
-                sb.append(path).append(File.separator).append(zoom).append(File.separator).append(x);
-                folder = new File(sb.toString());
-                if (!folder.exists()) {
-                    folder.mkdirs();
+                if (!useMongoStore) {
+                    sb.append(path).append(File.separator).append(zoom).append(File.separator).append(x);
+                    folder = new File(sb.toString());
+                    if (!folder.exists()) {
+                        folder.mkdirs();
+                    }
                 }
+
                 for (int y = minY; y <= maxY; y++) {
                     sb.setLength(0);
-                    fileName = sb.append(folder.getPath()).append(File.separator).append(y).append(".png").toString();
+                    if(!useMongoStore) {
+                        fileName = sb.append(folder.getPath()).append(File.separator).append(y).append(".png").toString();
+                    } else {
+                        fileName = sb.append(zoom).append("_").append(x).append("_").append(y).append(".png").toString();
+                    }
                     url = baseUrl.replace("{x}", String.valueOf(x)).replace("{y}", String.valueOf(y)).replace("{z}", String.valueOf(zoom));
                     urls.add(url);
                     fileNames.add(fileName);
@@ -149,5 +157,11 @@ public class MapServiceToolkit {
     public void setOneNun(int oneNun) {
         MapServiceToolkit.oneNun = oneNun;
     }
+
+    @Value("${config.store.mongo}")
+    public void setUseMongoStore(boolean useMongoStore) {
+        MapServiceToolkit.useMongoStore = useMongoStore;
+    }
+
 
 }

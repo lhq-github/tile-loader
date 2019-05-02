@@ -1,4 +1,7 @@
 
+// 是否使用mongo存储瓦片
+var useMongoStore = false;
+
 //layui组件
 var lay = {};
 layui.use([ 'form', 'element', 'layer' ], function() {
@@ -29,6 +32,19 @@ $(function() {
 	$('.changeMap').on('click', function() {
 		$('iframe').attr('src', $(this).attr('data-mapurl'));
 	})
+	// 获取存储方式
+	$.ajax({
+		type: 'post',
+		url: '/tile-loader/useMongoStore',
+		success: function(data){
+			ResultHandler.successNoTip(data, function() {
+				useMongoStore = data.result;
+				if(useMongoStore) {
+					$('.save-path-config').hide();
+				}
+			});
+		}
+	});
 	// 初始化树列表
 	initZtree();
 	//设置下载路径
@@ -207,7 +223,7 @@ function download() {
 		lay.layer.alert('请选择下载级别');  
 		return;
 	}
-	if(downloadParam.path.trim().length == 0) {
+	if(!useMongoStore && downloadParam.path.trim().length == 0) {
 		lay.layer.alert('请选择下载路径');  
 		return;
 	}

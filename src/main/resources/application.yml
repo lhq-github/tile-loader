@@ -1,4 +1,9 @@
 
+spring:
+   data:
+      mongodb:
+         uri: mongodb://lhq.com:27017/tiles
+         
 server:
    port: 10080
    tomcat:
@@ -19,3 +24,5 @@ config:
       coreSize: 2   #核心线程数
       maxSize: 6    #最大线程数
       queueSize: 2  #等待线程数
+   store:
+      mongo: true   #是否使用mongodb存储数据

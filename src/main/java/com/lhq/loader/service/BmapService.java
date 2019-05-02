@@ -41,7 +41,7 @@ public class BmapService implements IMapService {
     @Async("servicesExecutor")
     public void startDownload(DownloadParamVO downloadParamVO) {
         downloadProgress.setTaskCount(downloadParamVO.getId(), this.calculateCount(downloadParamVO));
-        MapServiceToolkit.startDownload(downloadParamVO, baseUrl, (LngLat lngLat, int zoom, Tile tile) -> CoordinateToolkit.bd09_LngLat_To_Tile(lngLat, zoom, tile));
+        MapServiceToolkit.startDownload(downloadParamVO, baseUrl, (LngLat lngLat, int zoom, Tile tile) -> CoordinateToolkit.bd09_LngLat_To_Tile(lngLat, zoom, tile), "BMAP");
     }
 
 }

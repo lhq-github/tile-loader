@@ -60,11 +60,13 @@ public class MapController {
      * @throws IOException
      */
     @GetMapping("/viewTile")
-    public void viewTile(Tile tile, HttpServletResponse response) throws IOException {
+    public void viewTile(Tile tile, String type, HttpServletResponse response) throws IOException {
         Query query = new Query();
-        query.addCriteria(GridFsCriteria.whereFilename().is(tile.getZoom() + "_" + tile.getX() + "_" + tile.getY() + ".png"));
+        query.addCriteria(GridFsCriteria.whereFilename().is(type + ":" + tile.getZoom() + "_" + tile.getX() + "_" + tile.getY() + ".png"));
         GridFSFile gridFSFile = gridFsTemplate.findOne(query);
-        GridFSBuckets.create(mongoDbFactory.getDb()).downloadToStream(gridFSFile.getId(), response.getOutputStream());
+        if (gridFSFile != null) {
+            GridFSBuckets.create(mongoDbFactory.getDb()).downloadToStream(gridFSFile.getId(), response.getOutputStream());
+        }
     }
 
     /**

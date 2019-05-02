@@ -2,7 +2,9 @@
 spring:
    data:
       mongodb:
-         uri: mongodb://lhq.com:27017/tiles
+         uri: mongodb://lhq.com:27017/tiles    
+   resources:
+      static-locations: classpath:/META-INF/resources/,classpath:/resources/,classpath:/static/,classpath:/public/,classpath:/offline-maps-api/
          
 server:
    port: 10080

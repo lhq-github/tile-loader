@@ -62,7 +62,7 @@ public class MapServiceToolkit {
      * 开始下载瓦片
      * 
      */
-    public static void startDownload(DownloadParamVO downloadParamVO, String baseUrl, LngLatTrans transToolkit) {
+    public static void startDownload(DownloadParamVO downloadParamVO, String baseUrl, LngLatTrans transToolkit, String type) {
         // 提前创建对象，重复利用，下面的循环次数可能到达百万次甚至千万次，每次创建对象效率太低
         Tile tile1 = new Tile();
         Tile tile2 = new Tile();
@@ -108,7 +108,7 @@ public class MapServiceToolkit {
                     if(!useMongoStore) {
                         fileName = sb.append(folder.getPath()).append(File.separator).append(y).append(".png").toString();
                     } else {
-                        fileName = sb.append(zoom).append("_").append(x).append("_").append(y).append(".png").toString();
+                        fileName = sb.append(type).append(":").append(zoom).append("_").append(x).append("_").append(y).append(".png").toString();
                     }
                     url = baseUrl.replace("{x}", String.valueOf(x)).replace("{y}", String.valueOf(y)).replace("{z}", String.valueOf(zoom));
                     urls.add(url);

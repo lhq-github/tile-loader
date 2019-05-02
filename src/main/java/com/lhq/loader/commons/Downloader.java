@@ -29,7 +29,7 @@ public class Downloader {
     @Value("${config.retryNum}")
     private int retryNum;
     @Value("${config.store.mongo}")
-    private boolean mongoStore;
+    private boolean useMongoStore;
     @Autowired
     private DownloadProgress downloadProgress;
     @Autowired
@@ -80,8 +80,17 @@ public class Downloader {
     private void downloadFile(String url, String fileName) throws Exception {
 //        Thread.sleep(1000);
 //        logger.info("{}下载路径:{}", fileName, url);
+        // 不重复下载
+        // TODO 每次都进行查询，该方式需要调整
+        if (useMongoStore && gridFsTemplate.getResource(fileName) != null && gridFsTemplate.getResource(fileName).exists()) {
+            return;
+        }
+        if (!useMongoStore && new File(fileName).exists()) {
+            return;
+        }
+        // 下载瓦片
         byte[] content = Request.Get(url).connectTimeout(5000).socketTimeout(5000).execute().returnContent().asBytes();
-        if (mongoStore) {
+        if (useMongoStore) {
             gridFsTemplate.store(new ByteArrayInputStream(content), fileName);
         } else {
             try (BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(new File(fileName)))) {

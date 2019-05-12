@@ -62,7 +62,7 @@ public class MapServiceToolkit {
      * 开始下载瓦片
      * 
      */
-    public static void startDownload(DownloadParamVO downloadParamVO, String baseUrl, LngLatTrans transToolkit, String type) {
+    public static void startDownload(DownloadParamVO downloadParamVO, String baseUrl, LngLatTrans transToolkit) {
         // 提前创建对象，重复利用，下面的循环次数可能到达百万次甚至千万次，每次创建对象效率太低
         Tile tile1 = new Tile();
         Tile tile2 = new Tile();
@@ -108,14 +108,14 @@ public class MapServiceToolkit {
                     if(!useMongoStore) {
                         fileName = sb.append(folder.getPath()).append(File.separator).append(y).append(".png").toString();
                     } else {
-                        fileName = sb.append(type).append(":").append(zoom).append("_").append(x).append("_").append(y).append(".png").toString();
+                        fileName = sb.append(zoom).append("_").append(x).append("_").append(y).append(".png").toString();
                     }
                     url = baseUrl.replace("{x}", String.valueOf(x)).replace("{y}", String.valueOf(y)).replace("{z}", String.valueOf(zoom));
                     urls.add(url);
                     fileNames.add(fileName);
                     // 当urls的数量达到oneNum时，或者是本次任务的最后一次时，启动下载任务
                     if (urls.size() == oneNun || (zoom == zooms[zooms.length - 1] && x == maxX && y == maxY)) {
-                        downloader.download(urls, fileNames, downloadParamVO.getId());
+                        downloader.download(urls, fileNames, downloadParamVO.getId(), downloadParamVO.getType());
                         urls = new ArrayList<>();
                         fileNames = new ArrayList<>();
                     }

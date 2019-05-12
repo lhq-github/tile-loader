@@ -37,7 +37,8 @@ OfflineMapType.prototype.name = 'OfflineMapType';
 
 OfflineMapType.prototype.getTile = function(coord, zoom, ownerDocument) {
 	var img = ownerDocument.createElement('img');
-	img.src = offlineMap.baseUrl + '/tiles/' + zoom + '/' + coord.x + '/' + coord.y + '.png';
+	img.src = '/tile-loader/map/viewTile?type=gmap&zoom='+zoom+'&x='+coord.x+'&y='+coord.y;
+// 	img.src = offlineMap.baseUrl + '/tiles/' + zoom + '/' + coord.x + '/' + coord.y + '.png';
 	img.alt	= '';
 	img.style.width = this.tileSize.width + 'px';
 	img.style.height = this.tileSize.height + 'px';

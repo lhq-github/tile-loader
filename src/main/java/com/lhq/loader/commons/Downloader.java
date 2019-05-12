@@ -11,6 +11,7 @@ import org.apache.http.client.fluent.Request;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.mongodb.gridfs.GridFsOperations;
 import org.springframework.scheduling.annotation.Async;
@@ -33,10 +34,23 @@ public class Downloader {
     @Autowired
     private DownloadProgress downloadProgress;
     @Autowired
-    private GridFsOperations gridFsTemplate;
+    @Qualifier("gridFsTemplateAmap")
+    private GridFsOperations gridFsTemplateAmap;
+    @Autowired
+    @Qualifier("gridFsTemplateBmap")
+    private GridFsOperations gridFsTemplateBmap;
+    @Autowired
+    @Qualifier("gridFsTemplateGmap")
+    private GridFsOperations gridFsTemplateGmap;
 
+    /**
+     * @param urls 下载地址url
+     * @param fileNames 下载文件路径名
+     * @param id 当前下载进程id
+     * @param type 当前下载类别amap/bmap/gmap
+     */
     @Async("downloaderExecutor")
-    public void download(List<String> urls, List<String> fileNames, String id) {
+    public void download(List<String> urls, List<String> fileNames, String id, String type) {
         Long current = (long) urls.size();
         List<String> failedUrls = new ArrayList<>();
         List<String> failedFileNames = new ArrayList<>();
@@ -48,7 +62,7 @@ public class Downloader {
                     String url = urls.get(i);
                     String fileName = fileNames.get(i);
                     try {
-                        this.downloadFile(url, fileName);
+                        this.downloadFile(url, fileName, type);
                     } catch (Exception e) {
                         if (retry == retryNum) {
                             logger.info("{}下载失败:{}", fileName, url);
@@ -77,11 +91,11 @@ public class Downloader {
      * @param fileName
      * @throws Exception
      */
-    private void downloadFile(String url, String fileName) throws Exception {
+    private void downloadFile(String url, String fileName, String type) throws Exception {
 //        Thread.sleep(1000);
 //        logger.info("{}下载路径:{}", fileName, url);
         // 不重复下载
-        // TODO 每次都进行查询，该方式需要调整
+        GridFsOperations gridFsTemplate = this.getGridFsOperations(type);
         if (useMongoStore && gridFsTemplate.getResource(fileName) != null && gridFsTemplate.getResource(fileName).exists()) {
             return;
         }
@@ -98,4 +112,14 @@ public class Downloader {
             }
         }
 	}
+
+    private GridFsOperations getGridFsOperations(String type) {
+        if ("amap".equals(type)) {
+            return gridFsTemplateAmap;
+        } else if ("bmap".equals(type)) {
+            return gridFsTemplateBmap;
+        } else {
+            return gridFsTemplateGmap;
+        }
+    }
 }

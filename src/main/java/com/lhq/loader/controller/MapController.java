@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.mongodb.MongoDbFactory;
 import org.springframework.data.mongodb.core.query.Query;
@@ -49,7 +50,14 @@ public class MapController {
     @Autowired
     private IMapService gmapService;
     @Autowired
-    private GridFsOperations gridFsTemplate;
+    @Qualifier("gridFsTemplateAmap")
+    private GridFsOperations gridFsTemplateAmap;
+    @Autowired
+    @Qualifier("gridFsTemplateBmap")
+    private GridFsOperations gridFsTemplateBmap;
+    @Autowired
+    @Qualifier("gridFsTemplateGmap")
+    private GridFsOperations gridFsTemplateGmap;
     @Autowired
     private MongoDbFactory mongoDbFactory;
 
@@ -61,11 +69,12 @@ public class MapController {
      */
     @GetMapping("/viewTile")
     public void viewTile(Tile tile, String type, HttpServletResponse response) throws IOException {
+        GridFsOperations gridFsTemplate = this.getGridFsOperations(type);
         Query query = new Query();
-        query.addCriteria(GridFsCriteria.whereFilename().is(type + ":" + tile.getZoom() + "_" + tile.getX() + "_" + tile.getY() + ".png"));
+        query.addCriteria(GridFsCriteria.whereFilename().is(tile.getZoom() + "_" + tile.getX() + "_" + tile.getY() + ".png"));
         GridFSFile gridFSFile = gridFsTemplate.findOne(query);
         if (gridFSFile != null) {
-            GridFSBuckets.create(mongoDbFactory.getDb()).downloadToStream(gridFSFile.getId(), response.getOutputStream());
+            GridFSBuckets.create(mongoDbFactory.getDb(), type).downloadToStream(gridFSFile.getId(), response.getOutputStream());
         }
     }
 
@@ -187,6 +196,16 @@ public class MapController {
             return gmapService;
         }
         throw new BaseException("下载器类别" + type + "不支持，请选择amap/bmap/gmap其中之一");
+    }
+
+    private GridFsOperations getGridFsOperations(String type) {
+        if ("amap".equals(type)) {
+            return gridFsTemplateAmap;
+        } else if ("bmap".equals(type)) {
+            return gridFsTemplateBmap;
+        } else {
+            return gridFsTemplateGmap;
+        }
     }
 	
 }

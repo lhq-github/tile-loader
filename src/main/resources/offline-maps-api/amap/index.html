@@ -38,7 +38,7 @@ var map = new AMap.Map('amap', {
 		new AMap.TileLayer({
 			tileUrl: function(x, y, z) {
 				//return offlineMap.baseUrl + '/tiles/'+z+'/'+x+'/'+y+'.png';
-				return '/tile-loader/map/viewTile?type=AMAP&zoom='+z+'&x='+x+'&y='+y;
+				return '/tile-loader/map/viewTile?type=amap&zoom='+z+'&x='+x+'&y='+y;
 			},
 			zIndex: 0
 		})

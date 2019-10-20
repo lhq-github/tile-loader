@@ -30,7 +30,6 @@ public class TaskExecutorConfig {
     private int maxSize;
     @Value("${config.pool.queueSize}")
     private int queueSize;
-    // 服务线程池数量需要和最大支持的下载任务数量一样（不小于maxTask，但大于没意义）
     @Value("${config.maxTask}")
     private int serviceCoreSize;
 

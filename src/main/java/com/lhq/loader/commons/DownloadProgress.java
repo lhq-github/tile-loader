@@ -12,6 +12,7 @@ import com.lhq.loader.exception.BaseException;
 
 /**
  * @author lhq
+ * TODO synchronized效率太低，有待调整
  * 下载进度管理器
  * key: 任务ID
  * value: 下载总数，已下载数，下载状态

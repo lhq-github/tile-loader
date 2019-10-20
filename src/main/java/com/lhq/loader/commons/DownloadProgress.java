@@ -3,9 +3,10 @@ package com.lhq.loader.commons;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.lhq.loader.bean.SysConfig;
 import com.lhq.loader.commons.consts.ProgressStateEnum;
 import com.lhq.loader.exception.BaseException;
 
@@ -23,8 +24,8 @@ public class DownloadProgress extends HashMap<String, Map<String, Long>> {
     public static final String CURRENT = "CURRENT"; //当前已下载数据
     public static final String STATE = "STATE";     //任务状态,start,pause,stop
 
-    @Value("${config.maxTask}")
-    private int maxTask;
+    @Autowired
+    private SysConfig sysConfig;
 
     /**
      * 开启一个下载任务
@@ -38,7 +39,7 @@ public class DownloadProgress extends HashMap<String, Map<String, Long>> {
         // 当前任务不存在
         if (task == null) {
             // 当前进行中任务数量小于maxTask，允许操作
-            if (this.inStartingNum() < maxTask) {
+            if (this.inStartingNum() < sysConfig.getMaxTask()) {
                 task = new HashMap<>();
                 task.put(COUNT, -1L);
                 task.put(CURRENT, 0L);
@@ -53,7 +54,7 @@ public class DownloadProgress extends HashMap<String, Map<String, Long>> {
                 flag = true;
             } else if (task.get(STATE).longValue() == ProgressStateEnum.PAUSE.getState()) {
                 // 暂停状态，且当前进行中任务数量小于maxTask，允许操作
-                if (this.inStartingNum() < maxTask) {
+                if (this.inStartingNum() < sysConfig.getMaxTask()) {
                     task.put(STATE, ProgressStateEnum.START.getState());
                     flag = true;
                 }
@@ -105,8 +106,8 @@ public class DownloadProgress extends HashMap<String, Map<String, Long>> {
         if (task == null) {
             throw new BaseException("下载任务" + id + "不存在");
         }
-        if (this.inStartingNum() >= maxTask) {
-            throw new BaseException("下载任务最大支持" + maxTask + "个，请等待其他任务下载结束或暂停其他任务");
+        if (this.inStartingNum() >= sysConfig.getMaxTask()) {
+            throw new BaseException("下载任务最大支持" + sysConfig.getMaxTask() + "个，请等待其他任务下载结束或暂停其他任务");
         }
         if (task.get(STATE).longValue() == ProgressStateEnum.STOP.getState()) {
             throw new BaseException("该任务已经停止，不能启动");

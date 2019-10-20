@@ -34,26 +34,6 @@ public class TaskExecutorConfig {
     @Value("${config.maxTask}")
     private int serviceCoreSize;
 
-    @Bean("downloaderExecutor")
-    public TaskExecutor downloaderExecutor() {
-        ThreadPoolTaskExecutor executor = new VisiableThreadPoolTaskExecutor();
-        // 设置核心线程数
-        executor.setCorePoolSize(coreSize);
-        // 设置最大线程数
-        executor.setMaxPoolSize(maxSize);
-        // 设置队列容量
-        executor.setQueueCapacity(queueSize);
-        // 设置线程活跃时间（秒）
-        executor.setKeepAliveSeconds(60);
-        // 设置默认线程名称
-        executor.setThreadNamePrefix("downloader-");
-        // 设置拒绝策略
-        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
-        // 等待所有任务结束后再关闭线程池
-        executor.setWaitForTasksToCompleteOnShutdown(true);
-        return executor;
-    }
-
     /**
      * 服务线程的数量应该和maxTask值相同
      * 

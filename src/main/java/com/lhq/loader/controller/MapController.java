@@ -67,7 +67,7 @@ public class MapController {
      * @param response
      * @throws IOException
      */
-    @GetMapping("/{type}/viewTile")
+    @GetMapping("/viewTile/{type}")
     public void viewTile(Tile tile, @PathVariable String type, HttpServletResponse response) throws IOException {
         if (sysConfig.getMongoStore() == 0) {
             throw new BaseException("使用mongo存储时才需要使用该方式查看瓦片，请切换至使用tomcat中的瓦片");

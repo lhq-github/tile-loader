@@ -37,8 +37,10 @@ var map = new AMap.Map('amap', {
 	layers: [
 		new AMap.TileLayer({
 			tileUrl: function(x, y, z) {
+				// 本地存储时，从磁盘加载瓦片
 				//return offlineMap.baseUrl + '/tiles/'+z+'/'+x+'/'+y+'.png';
-				return '/tile-loader/map/viewTile?type=amap&zoom='+z+'&x='+x+'&y='+y;
+				// mongo存储时，从mongo加装瓦片
+				return '/tile-loader/map/viewTile/amap?zoom='+z+'&x='+x+'&y='+y;
 			},
 			zIndex: 0
 		})

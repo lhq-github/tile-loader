@@ -1,11 +1,12 @@
 package com.lhq.loader.controller;
 
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.lhq.loader.bean.SysConfig;
 import com.lhq.loader.commons.bean.ResultData;
 
 /**
@@ -15,8 +16,8 @@ import com.lhq.loader.commons.bean.ResultData;
 @Controller
 public class IndexController {
 
-    @Value("${config.store.mongo}")
-    private boolean mongoStore;
+    @Autowired
+    private SysConfig sysConfig;
 
     @GetMapping("/index")
     public String index() {
@@ -51,7 +52,7 @@ public class IndexController {
     @PostMapping("/useMongoStore")
     @ResponseBody
     public ResultData<Boolean> useMongoStore() {
-        return new ResultData<Boolean>().success(mongoStore);
+        return new ResultData<Boolean>().success(sysConfig.getMongoStore() == 1 ? true : false);
     }
 
 }

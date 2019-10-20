@@ -16,8 +16,8 @@ server:
 config:
    maxTask: 3      #最大支持的下载任务数量
    retryNum: 3     #同一个瓦片，下载失败后最大重试次数
-   tilePoolSize: 50    #后台瓦片下载线程数量，这个是java线程数，现在个人电脑配置50基本没压力
-   mongoStore: 1   #是否使用mongodb存储数据，(0:本地存储，1:mongo存储)，不使用mongo存储时，从@SpringBootApplication中去掉mongo的自动化配置
+   tilePoolSize: 5    #后台瓦片下载线程数量，这个是java线程数，现在个人电脑配置50基本没压力
+   mongoStore: 0   #是否使用mongodb存储数据，(0:本地存储，1:mongo存储)，不使用mongo存储时，从@SpringBootApplication中去掉mongo的自动化配置
    
    baseUrl:        #瓦片下载地址
       amap: "http://wprd01.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scl=1&style=7&x={x}&y={y}&z={z}"

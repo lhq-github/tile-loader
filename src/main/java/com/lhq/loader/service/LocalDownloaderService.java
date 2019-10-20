@@ -3,7 +3,6 @@ package com.lhq.loader.service;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.util.concurrent.ArrayBlockingQueue;
 
 import org.apache.http.client.fluent.Request;
 import org.slf4j.Logger;
@@ -24,7 +23,6 @@ import com.lhq.loader.commons.DownloadProgress;
 @ConditionalOnProperty(value = "config.mongoStore", havingValue = "0")
 public class LocalDownloaderService implements IDownloaderService {
     private static final Logger logger = LoggerFactory.getLogger(LocalDownloaderService.class);
-    private static ArrayBlockingQueue<DownFile> tileQueue = MapServiceToolkit.getTileQueue();
 
     @Autowired
     private DownloadProgress downloadProgress;
@@ -35,7 +33,7 @@ public class LocalDownloaderService implements IDownloaderService {
     public void run() {
         while (true) {
             try {
-                DownFile downFile = tileQueue.take();
+                DownFile downFile = MapServiceToolkit.getTileQueue().take();
                 this.downloadFile(downFile.getUrl(), downFile.getFileName(), downFile.getMapType());
                 downloadProgress.addTaskCurrent(downFile.getThreadId(), 1L);
             } catch (InterruptedException e) {

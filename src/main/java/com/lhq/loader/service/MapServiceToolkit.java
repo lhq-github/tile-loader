@@ -24,7 +24,7 @@ import com.lhq.loader.function.LngLatTrans;
  */
 public class MapServiceToolkit {
     private static final Logger logger = LoggerFactory.getLogger(MapServiceToolkit.class);
-    private static ArrayBlockingQueue<DownFile> tileQueue = new ArrayBlockingQueue<>(100);
+    private static ArrayBlockingQueue<DownFile> tileQueue;
 
     private MapServiceToolkit() {
     }
@@ -135,6 +135,10 @@ public class MapServiceToolkit {
                 }
             }
         }
+    }
+
+    public static void setTileQueue(int capacity) {
+        tileQueue = new ArrayBlockingQueue<>(capacity);
     }
 
     public static ArrayBlockingQueue<DownFile> getTileQueue() {

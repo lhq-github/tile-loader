@@ -1,20 +1,18 @@
 package com.lhq.loader.service;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
+import com.lhq.loader.bean.DownFile;
 import com.lhq.loader.bean.LngLat;
+import com.lhq.loader.bean.SysConfig;
 import com.lhq.loader.bean.Tile;
 import com.lhq.loader.commons.DownloadProgress;
-import com.lhq.loader.commons.Downloader;
 import com.lhq.loader.commons.consts.ProgressStateEnum;
+import com.lhq.loader.commons.toolkit.SpringContextToolkit;
 import com.lhq.loader.controller.vo.DownloadParamVO;
 import com.lhq.loader.function.LngLatTrans;
 
@@ -24,14 +22,12 @@ import com.lhq.loader.function.LngLatTrans;
  * @author lhq
  *
  */
-//该注解的目的是给属性赋值
-@Component
 public class MapServiceToolkit {
     private static final Logger logger = LoggerFactory.getLogger(MapServiceToolkit.class);
-    private static Downloader downloader;
-    private static DownloadProgress downloadProgress;
-    private static int oneNun;
-    private static boolean useMongoStore = true;
+    private static ArrayBlockingQueue<DownFile> tileQueue;
+
+    private MapServiceToolkit() {
+    }
 
     /**
      * 计算下载的瓦片数量
@@ -80,9 +76,9 @@ public class MapServiceToolkit {
         String fileName;
         String url;
         StringBuilder sb = new StringBuilder();
-        List<String> fileNames = new ArrayList<>();
-        List<String> urls = new ArrayList<>();
 
+        boolean useMongoStore = SpringContextToolkit.getBean(SysConfig.class).getMongoStore() == 1 ? true : false;
+        DownloadProgress downloadProgress = SpringContextToolkit.getBean(DownloadProgress.class);
         outer: for (int zoom : zooms) {
             // 经纬度转瓦片
             transToolkit.trans(northwest, zoom, tile1);
@@ -111,13 +107,11 @@ public class MapServiceToolkit {
                         fileName = sb.append(zoom).append("_").append(x).append("_").append(y).append(".png").toString();
                     }
                     url = baseUrl.replace("{x}", String.valueOf(x)).replace("{y}", String.valueOf(y)).replace("{z}", String.valueOf(zoom));
-                    urls.add(url);
-                    fileNames.add(fileName);
-                    // 当urls的数量达到oneNum时，或者是本次任务的最后一次时，启动下载任务
-                    if (urls.size() == oneNun || (zoom == zooms[zooms.length - 1] && x == maxX && y == maxY)) {
-                        downloader.download(urls, fileNames, downloadParamVO.getId(), downloadParamVO.getType());
-                        urls = new ArrayList<>();
-                        fileNames = new ArrayList<>();
+                    try {
+                        tileQueue.put(new DownFile(url, fileName, downloadParamVO.getType(), downloadParamVO.getId()));
+                    } catch (InterruptedException e) {
+                        logger.error(e.getLocalizedMessage(), e);
+                        Thread.currentThread().interrupt();
                     }
                     // 校验当前任务的状态
                     while (true) {
@@ -143,25 +137,12 @@ public class MapServiceToolkit {
         }
     }
 
-    @Autowired
-    public void setDownloader(Downloader downloader) {
-        MapServiceToolkit.downloader = downloader;
+    public static void setTileQueue(int capacity) {
+        tileQueue = new ArrayBlockingQueue<>(capacity);
     }
 
-    @Autowired
-    public void setDownloadProgress(DownloadProgress downloadProgress) {
-        MapServiceToolkit.downloadProgress = downloadProgress;
+    public static ArrayBlockingQueue<DownFile> getTileQueue() {
+        return tileQueue;
     }
-
-    @Value("${config.downloader.oneNum}")
-    public void setOneNun(int oneNun) {
-        MapServiceToolkit.oneNun = oneNun;
-    }
-
-    @Value("${config.store.mongo}")
-    public void setUseMongoStore(boolean useMongoStore) {
-        MapServiceToolkit.useMongoStore = useMongoStore;
-    }
-
 
 }

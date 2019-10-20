@@ -1,5 +1,6 @@
 package com.lhq.loader.config;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.MongoDbFactory;
@@ -11,6 +12,7 @@ import org.springframework.data.mongodb.gridfs.GridFsTemplate;
  *
  */
 @Configuration
+@ConditionalOnProperty(value = "config.mongoStore", havingValue = "1")
 public class MongodbConfig {
 
     @Bean
@@ -27,4 +29,5 @@ public class MongodbConfig {
     public GridFsTemplate gridFsTemplateGmap(MongoDbFactory dbFactory, MongoConverter converter) {
         return new GridFsTemplate(dbFactory, converter, "gmap");
     }
+
 }

@@ -12,7 +12,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.mongodb.MongoDbFactory;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.gridfs.GridFsCriteria;
@@ -24,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.lhq.loader.bean.SysConfig;
 import com.lhq.loader.bean.Tile;
 import com.lhq.loader.commons.DownloadProgress;
 import com.lhq.loader.commons.bean.ResultData;
@@ -37,10 +37,8 @@ import com.mongodb.client.gridfs.model.GridFSFile;
 @RequestMapping("/map")
 public class MapController {
 
-    // 最大支持同时进行的任务数量
-    @Value("${config.maxTask}")
-    private int maxTask;
-
+    @Autowired
+    private SysConfig sysConfig;
     @Autowired
     private DownloadProgress downloadProgress;
     @Autowired
@@ -49,17 +47,19 @@ public class MapController {
     private IMapService bmapService;
     @Autowired
     private IMapService gmapService;
-    @Autowired
+
+    @Autowired(required = false)
     @Qualifier("gridFsTemplateAmap")
     private GridFsOperations gridFsTemplateAmap;
-    @Autowired
+    @Autowired(required = false)
     @Qualifier("gridFsTemplateBmap")
     private GridFsOperations gridFsTemplateBmap;
-    @Autowired
+    @Autowired(required = false)
     @Qualifier("gridFsTemplateGmap")
     private GridFsOperations gridFsTemplateGmap;
-    @Autowired
+    @Autowired(required = false)
     private MongoDbFactory mongoDbFactory;
+
 
     /**
      * 当使用mongo存储瓦片时，查看瓦片
@@ -67,8 +67,11 @@ public class MapController {
      * @param response
      * @throws IOException
      */
-    @GetMapping("/viewTile")
-    public void viewTile(Tile tile, String type, HttpServletResponse response) throws IOException {
+    @GetMapping("/viewTile/{type}")
+    public void viewTile(Tile tile, @PathVariable String type, HttpServletResponse response) throws IOException {
+        if (sysConfig.getMongoStore() == 0) {
+            throw new BaseException("使用mongo存储时才需要使用该方式查看瓦片，请切换至使用tomcat中的瓦片");
+        }
         GridFsOperations gridFsTemplate = this.getGridFsOperations(type);
         Query query = new Query();
         query.addCriteria(GridFsCriteria.whereFilename().is(tile.getZoom() + "_" + tile.getX() + "_" + tile.getY() + ".png"));
@@ -101,7 +104,7 @@ public class MapController {
         downloadParamVO.setId(UUID.randomUUID().toString().replaceAll("-", ""));
         downloadParamVO.setPath(downloadParamVO.getPath() + File.separator + downloadParamVO.getType());
         if (!downloadProgress.startTask(downloadParamVO.getId())) {
-            throw new BaseException("下载任务最大支持" + maxTask + "个，请等待其他任务下载结束或暂停其他任务");
+            throw new BaseException("下载任务最大支持" + sysConfig.getMaxTask() + "个，请等待其他任务下载结束或暂停其他任务");
         }
         IMapService mapService = this.getMapService(downloadParamVO.getType());
         mapService.startDownload(downloadParamVO);

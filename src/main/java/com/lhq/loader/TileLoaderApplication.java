@@ -13,6 +13,8 @@ import com.lhq.loader.client.BrowserClient;
  *
  */
 @SpringBootApplication
+//去掉mongo的自动化配置
+//@SpringBootApplication(exclude = { MongoDataAutoConfiguration.class, MongoAutoConfiguration.class })
 public class TileLoaderApplication {
 
     public static void main(String[] args) {

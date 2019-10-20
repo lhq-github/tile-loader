@@ -5,6 +5,7 @@ import org.springframework.boot.context.event.ApplicationStartedEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Component;
 
+import com.lhq.loader.bean.SysConfig;
 import com.lhq.loader.client.BrowserClient;
 
 /**
@@ -18,10 +19,14 @@ public class ApplicationStartedEventListener implements ApplicationListener<Appl
 
     @Autowired
     private BrowserClient browserClient;
+    @Autowired
+    private SysConfig sysConfig;
 
     @Override
     public void onApplicationEvent(ApplicationStartedEvent event) {
-        browserClient.open();
+        if (sysConfig.getOpenClient() == 1) {
+            browserClient.open();
+        }
     }
 
 }

@@ -8,6 +8,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.google.gson.Gson;
 import com.lhq.loader.bean.SysConfig;
 
 /**
@@ -25,12 +26,8 @@ public class PropertiesConfig {
 
     @Bean
     public SysConfig sysConfig(@Qualifier("sysConfigMap") Map<String, String> sysConfigMap) {
-        SysConfig sysConfig = new SysConfig();
-        sysConfig.setMaxTask(Integer.parseInt(sysConfigMap.get("maxTask")));
-        sysConfig.setMongoStore(Integer.parseInt(sysConfigMap.get("mongoStore")));
-        sysConfig.setRetryNum(Integer.parseInt(sysConfigMap.get("retryNum")));
-        sysConfig.setTilePoolSize(Integer.parseInt(sysConfigMap.get("tilePoolSize")));
-        return sysConfig;
+        Gson gson = new Gson();
+        return gson.fromJson(gson.toJson(sysConfigMap), SysConfig.class);
     }
 
 }

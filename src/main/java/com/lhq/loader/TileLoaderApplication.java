@@ -18,12 +18,7 @@ import com.lhq.loader.client.BrowserClient;
 public class TileLoaderApplication {
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                BrowserClient.setjFrame(new JFrame());
-            }
-        });
+        SwingUtilities.invokeLater(() -> BrowserClient.setjFrame(new JFrame()));
         SpringApplication.run(TileLoaderApplication.class, args);
     }
 

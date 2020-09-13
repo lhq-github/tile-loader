@@ -36,25 +36,39 @@ $(function() {
 })
 
 function clickTree(treeNode) {
+	var name = treeNode.oldname ? treeNode.oldname : treeNode.name;
 	districtSearch.setLevel(treeNode.level);
 	districtSearch.setExtensions('all');
 	districtSearch.setSubdistrict(0);
-	districtSearch.search(treeNode.oldname ? treeNode.oldname : treeNode.name,
+	districtSearch.search(name,
 		function(status, result) {
+			if(result.districtList == undefined) {
+				window.parent.layui.layer.alert('未获取到“' + name + '”的边界数据', {
+					icon: 2
+				});
+				return;
+			}
 			map.clearMap();
-
-			var polygon = new AMap.Polygon({
-				path : result.districtList[0].boundaries,
-				fillColor : '#0000ff',
-				fillOpacity : 0.1,
-				strokeColor : '#0000ff',
-				strokeOpacity : 0.6,
-				map : map
-			});
-
+			var boundaries = result.districtList[0].boundaries;
+			var maxArea = 0;
+			var polygon = null;
+			for(var i in boundaries) {
+				var tmp = new AMap.Polygon({
+					path : boundaries[i],
+					fillColor : '#0000ff',
+					fillOpacity : 0.1,
+					strokeColor : '#0000ff',
+					strokeOpacity : 0.6,
+					map : map
+				});
+				if(tmp.getArea() > maxArea) {
+					maxArea = tmp.getArea();
+					polygon = tmp;
+				}
+			}
+			
 			downText.setPosition(polygon.getBounds().getCenter());
 			downText.setMap(map);
-
 			map.setFitView(polygon);
 
 			initData.northwest.lng = polygon.getBounds().getNorthWest().getLng();

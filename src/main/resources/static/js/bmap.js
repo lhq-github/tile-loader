@@ -41,7 +41,14 @@ $(function(){
 })
 
 function clickTree(treeNode) {
-	boundary.get(treeNode.oldname? treeNode.oldname : treeNode.name, function(result){
+	var name = treeNode.oldname? treeNode.oldname : treeNode.name;
+	boundary.get(name, function(result){
+		if(result.boundaries == undefined || result.boundaries.length == 0) {
+			window.parent.layui.layer.alert('未获取到“' + name + '”的边界数据', {
+				icon: 2
+			});
+			return;
+		}
 		map.clearOverlays();
 		if(result) {
 			var bounds = new BMap.Bounds(new BMap.Point(0, 0), new BMap.Point(0, 0));

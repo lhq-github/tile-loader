@@ -36,8 +36,9 @@ $(function(){
 })
 
 function clickTree(treeNode) {
+	var name = treeNode.oldname? treeNode.oldname : treeNode.name;
 	$.post('https://restapi.amap.com/v3/config/district',{
-		keywords: treeNode.oldname? treeNode.oldname : treeNode.name,
+		keywords: name,
 		subdistrict: 0,
 		key: '384ad4927f4025558ab8c5384cc4d9e7',
 		extensions: 'all'
@@ -48,6 +49,12 @@ function clickTree(treeNode) {
 			}
 			if(downText != null) {
 				downText.setMap(null);
+			}
+			if(data.districts == undefined || data.districts.length == 0) {
+				window.parent.layui.layer.alert('未获取到“' + name + '”的边界数据', {
+					icon: 2
+				});
+				return;
 			}
 			
 			var polylineStr = data.districts[0].polyline;
@@ -75,12 +82,10 @@ function clickTree(treeNode) {
 			});
 			map.fitBounds(bounds);
 			
-			console.log(bounds.getCenter());
 			initData.northwest.lng = bounds.getSouthWest().lng();
 	 		initData.northwest.lat = bounds.getNorthEast().lat();
 	 		initData.southeast.lng = bounds.getNorthEast().lng();
 	 		initData.southeast.lat = bounds.getSouthWest().lat();
-			console.log(initData);
 			window.parent.calculateCount();
 			
 			downText = new GMapText(map, {

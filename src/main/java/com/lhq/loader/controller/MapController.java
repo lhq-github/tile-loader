@@ -3,8 +3,10 @@ package com.lhq.loader.controller;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.UUID;
 
 import javax.servlet.http.HttpServletResponse;
@@ -24,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.lhq.loader.bean.SysConfig;
+import com.lhq.loader.bean.Task;
 import com.lhq.loader.bean.Tile;
 import com.lhq.loader.commons.DownloadProgress;
 import com.lhq.loader.commons.bean.ResultData;
@@ -103,9 +106,6 @@ public class MapController {
     public ResultData<String> startDownload(@RequestBody DownloadParamVO downloadParamVO) {
         downloadParamVO.setId(UUID.randomUUID().toString().replaceAll("-", ""));
         downloadParamVO.setPath(downloadParamVO.getPath() + File.separator + downloadParamVO.getType());
-        if (!downloadProgress.startTask(downloadParamVO.getId())) {
-            throw new BaseException("下载任务最大支持" + sysConfig.getMaxTask() + "个，请等待其他任务下载结束或暂停其他任务");
-        }
         IMapService mapService = this.getMapService(downloadParamVO.getType());
         mapService.startDownload(downloadParamVO);
         return new ResultData<String>().success(downloadParamVO.getId());
@@ -119,7 +119,8 @@ public class MapController {
      */
     @PostMapping("/start/{id}")
     public ResultData<Boolean> startTask(@PathVariable String id) {
-        return new ResultData<Boolean>().success(downloadProgress.start(id));
+        downloadProgress.start(id);
+        return new ResultData<Boolean>().success();
     }
 
     /**
@@ -130,7 +131,8 @@ public class MapController {
      */
     @PostMapping("/pause/{id}")
     public ResultData<Boolean> pauseTask(@PathVariable String id) {
-        return new ResultData<Boolean>().success(downloadProgress.pause(id));
+        downloadProgress.pause(id);
+        return new ResultData<Boolean>().success();
     }
 
     /**
@@ -141,7 +143,8 @@ public class MapController {
      */
     @PostMapping("/stop/{id}")
     public ResultData<Boolean> stopTask(@PathVariable String id) {
-        return new ResultData<Boolean>().success(downloadProgress.stop(id));
+        downloadProgress.stop(id);
+        return new ResultData<Boolean>().success();
     }
 
     /**
@@ -181,7 +184,16 @@ public class MapController {
      */
     @PostMapping("/getProgress")
     public ResultData<Map<String, Map<String, Long>>> getProgress() {
-        return new ResultData<Map<String, Map<String, Long>>>().success(downloadProgress);
+        Map<String, Map<String, Long>> result = new HashMap<>();
+        for (Entry<String, Task> entry : downloadProgress.entrySet()) {
+            Map<String, Long> tmp = new HashMap<>();
+            Task task = entry.getValue();
+            tmp.put("STATE", task.getState().getState());
+            tmp.put("COUNT", task.getCount());
+            tmp.put("CURRENT", task.getCurrent());
+            result.put(entry.getKey(), tmp);
+        }
+        return new ResultData<Map<String, Map<String, Long>>>().success(result);
     }
 	
     /**

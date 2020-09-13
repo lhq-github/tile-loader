@@ -280,7 +280,7 @@ setInterval(function() {
 					}
 					var progress = data.result[i]['CURRENT'] / data.result[i]['COUNT'];
 					if(!isNaN(progress)) {
-						progress = Math.floor(progress * 100) / 100 
+						progress = progress.toFixed(4);
 						if(progress == 1 && data.result[i]['CURRENT'] != data.result[i]['COUNT']) {
 							progress = 0.9999;
 						}
@@ -310,4 +310,4 @@ setInterval(function() {
 			})
 		}
 	})
-}, 1000);
+}, 3000);

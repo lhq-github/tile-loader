@@ -14,17 +14,13 @@ server:
       context-path: /tile-loader
 
 config:
-   maxTask: 3      #最大支持的下载任务数量
-   retryNum: 3     #同一个瓦片，下载失败后最大重试次数
-   tilePoolSize: 5 #后台下载瓦片线程数量，现在个人电脑配置50基本没压力
-   mongoStore: 0   #是否使用mongodb存储数据，(0:本地存储，1:mongo存储)，不使用mongo存储时，从@SpringBootApplication中去掉mongo的自动化配置
-   openClient: 0   #是否开启客户端，(0:不开启，1:开启)，客户端是指jxbrowser客户端
+   downPoolSize: 3     #下载任务数量
+   retryNum: 3         #同一个瓦片，下载失败后最大重试次数
+   tilePoolSize: 5     #后台下载瓦片线程数量，现在个人电脑配置50基本没压力
+   mongoStore: 0       #是否使用mongodb存储数据，(0:本地存储，1:mongo存储)，不使用mongo存储时，从@SpringBootApplication中去掉mongo的自动化配置
+   openClient: 0       #是否开启客户端，(0:不开启，1:开启)，客户端是指jxbrowser客户端
    
    baseUrl:        #瓦片下载地址，每个图片厂商都提供了多种地图瓦片，如标准图层、卫星图层、路网图层等，需要自己找一下瓦片下载地址
       amap: "http://wprd01.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scl=1&style=7&x={x}&y={y}&z={z}"
       bmap: "http://online3.map.bdimg.com/onlinelabel/?qt=tile&styles=pl&udt=20170712&scaler=1&p=1&x={x}&y={y}&z={z}"
       gmap: "http://mt2.google.cn/vt/lyrs=m&scale=2&hl=zh-CN&gl=cn&x={x}&y={y}&z={z}"     
-   pool:           #下载器线程池
-      coreSize: 2   #核心线程数
-      maxSize: 6    #最大线程数
-      queueSize: 2  #等待线程数

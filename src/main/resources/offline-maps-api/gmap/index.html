@@ -38,44 +38,38 @@ OfflineMapType.prototype.name = 'OfflineMapType';
 OfflineMapType.prototype.getTile = function(coord, zoom, ownerDocument) {
 	var img = ownerDocument.createElement('img');
     // 本地存储时，从磁盘加载瓦片 
-	// img.src = offlineMap.baseUrl + '/tiles/' + zoom + '/' + coord.x + '/' + coord.y + '.png';
+	img.src = offlineMap.baseUrl + '/tiles/' + zoom + '/' + coord.x + '/' + coord.y + '.png';
     // mongo存储时，从mongo加装瓦片
-	img.src = '/tile-loader/map/viewTile/gmap&zoom='+zoom+'&x='+coord.x+'&y='+coord.y;
+	// img.src = '/tile-loader/map/viewTile/gmap&zoom='+zoom+'&x='+coord.x+'&y='+coord.y;
 	img.alt	= '';
 	img.style.width = this.tileSize.width + 'px';
 	img.style.height = this.tileSize.height + 'px';
 	return img;
 };
 
-
-
 var map = new google.maps.Map(document.getElementById('gmap'), {
-		center: {
-			lat: 23.155438,
-			lng: 113.439071
-		},
-		zoom: 3,
-		minZoom: 3,
-		maxZoom: 20,
-		clickableIcons: false,
-		gestureHandling: 'greedy',
-		disableDoubleClickZoom: true,
-		
-		zoomControl: false,
-		mapTypeControl: false,
-		streetViewControl: false,
-		rotateControl: false,
-		fullscreenControl: false,
-		scaleControl: true
-	});
+	center: {
+		lat: 23.155438,
+		lng: 113.439071
+	},
+	zoom: 3,
+	minZoom: 3,
+	maxZoom: 20,
+	clickableIcons: false,
+	gestureHandling: 'greedy',
+	disableDoubleClickZoom: true,
 	
+	zoomControl: false,
+	mapTypeControl: false,
+	streetViewControl: false,
+	rotateControl: false,
+	fullscreenControl: false,
+	scaleControl: true
+});
+
+map.setOptions({mapTypeId: OfflineMapType.name})
+map.mapTypes.set(OfflineMapType.name, new OfflineMapType());
 	
-		map.setOptions({mapTypeId: OfflineMapType.name})
-		map.mapTypes.set(OfflineMapType.name, new OfflineMapType());
-	
-
-
-
 </script>
 	
 </body>

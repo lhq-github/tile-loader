@@ -25,8 +25,8 @@ public class AmapService implements IMapService {
      * 
      */
 	@Override
-    public Long calculateCount(DownloadParamVO downloadParamVO) {
-        return MapServiceToolkit.calculateCount(downloadParamVO, (LngLat lngLat, int zoom, Tile tile) -> CoordinateToolkit.gcj02_LngLat_To_Tile(lngLat, zoom, tile));
+    public long calculateCount(DownloadParamVO downloadParamVO) {
+        return MapServiceToolkit.calcTileCount(downloadParamVO, (LngLat lngLat, int zoom, Tile tile) -> CoordinateToolkit.gcj02_LngLat_To_Tile(lngLat, zoom, tile));
 	}
 	
 	/**
@@ -35,7 +35,7 @@ public class AmapService implements IMapService {
      */
     @Override
     public void startDownload(DownloadParamVO downloadParamVO) {
-        MapServiceToolkit.startDownload(downloadParamVO, baseUrl, this, (LngLat lngLat, int zoom, Tile tile) -> CoordinateToolkit.gcj02_LngLat_To_Tile(lngLat, zoom, tile));
+        MapServiceToolkit.addDownTask(downloadParamVO, baseUrl, this, (LngLat lngLat, int zoom, Tile tile) -> CoordinateToolkit.gcj02_LngLat_To_Tile(lngLat, zoom, tile));
     }
 	
 }

@@ -8,12 +8,15 @@ import org.springframework.stereotype.Component;
 
 import com.lhq.loader.bean.SysConfig;
 import com.lhq.loader.bean.Task;
-import com.lhq.loader.commons.consts.ProgressStateEnum;
+import com.lhq.loader.commons.consts.TaskStateEnum;
 import com.lhq.loader.exception.BaseException;
 
+
 /**
- * @author lhq
  * 下载进度管理器
+ * 
+ * @author 灯火-lhq910523@sina.com
+ * @time 2020-09-16 14:41:44
  */
 @Component
 public class DownloadProgress extends HashMap<String, Task> {
@@ -30,7 +33,7 @@ public class DownloadProgress extends HashMap<String, Task> {
     public boolean downPoolFull() {
         int count = 0;
         for (Entry<String, Task> entry : this.entrySet()) {
-            if (entry.getValue().getState() != ProgressStateEnum.STOP) {
+            if (entry.getValue().getState() != TaskStateEnum.STOP) {
                 count++;
             }
         }
@@ -43,17 +46,15 @@ public class DownloadProgress extends HashMap<String, Task> {
      * @param id
      * @return
      */
-    public synchronized void startTask(String id, Long count) {
-        Task task = this.get(id);
-        // 当前任务不存在
-        if (task == null) {
-            task = new Task();
+    public synchronized void openTask(String id, long count) {
+        this.computeIfAbsent(id, (ks) -> {
+            Task task = new Task();
             task.setCount(count);
             task.setCurrent(0L);
-            task.setState(ProgressStateEnum.START);
+            task.setState(TaskStateEnum.START);
             task.setSemaphore(new Semaphore(1));
-            this.put(id, task);
-        }
+            return task;
+        });
     }
 
     /**
@@ -62,7 +63,7 @@ public class DownloadProgress extends HashMap<String, Task> {
      * @param id
      * @param current
      */
-    public void addTaskCurrent(String id, Long current) {
+    public void addTaskCurrent(String id, long current) {
         Task task = this.get(id);
         if (task == null) {
             throw new BaseException("下载任务" + id + "不存在");
@@ -70,8 +71,8 @@ public class DownloadProgress extends HashMap<String, Task> {
         synchronized (task) {
             task.setCurrent(task.getCurrent() + current);
             // 瓦片下载结束后，将状态标记为stop
-            if (task.getCurrent().longValue() == task.getCount()) {
-                task.setState(ProgressStateEnum.STOP);
+            if (task.getCurrent() == task.getCount()) {
+                task.setState(TaskStateEnum.STOP);
             }
         }
     }
@@ -87,15 +88,15 @@ public class DownloadProgress extends HashMap<String, Task> {
             throw new BaseException("下载任务" + id + "不存在");
         }
         synchronized (task) {
-            if (task.getCurrent().longValue() == task.getCount()) {
+            if (task.getCurrent() == task.getCount()) {
                 throw new BaseException("该任务已经下载结束，不能启动");
             }
-            if (task.getState() == ProgressStateEnum.STOP) {
+            if (task.getState() == TaskStateEnum.STOP) {
                 throw new BaseException("该任务已经停止，不能启动");
             }
             task.getSemaphore().drainPermits();// 消耗掉所有的许可
             task.getSemaphore().release(1);// 新增一个许可
-            task.setState(ProgressStateEnum.START);
+            task.setState(TaskStateEnum.START);
         }
     }
 
@@ -110,14 +111,14 @@ public class DownloadProgress extends HashMap<String, Task> {
             throw new BaseException("下载任务" + id + "不存在");
         }
         synchronized (task) {
-            if (task.getCurrent().longValue() == task.getCount()) {
+            if (task.getCurrent() == task.getCount()) {
                 throw new BaseException("该任务已经下载结束，不能暂停");
             }
-            if (task.getState() == ProgressStateEnum.STOP) {
+            if (task.getState() == TaskStateEnum.STOP) {
                 throw new BaseException("该任务已经停止，不能暂停");
             }
             task.getSemaphore().drainPermits();// 消耗掉所有的许可
-            task.setState(ProgressStateEnum.PAUSE);
+            task.setState(TaskStateEnum.PAUSE);
         }
     }
 
@@ -134,7 +135,7 @@ public class DownloadProgress extends HashMap<String, Task> {
         synchronized (task) {
             task.getSemaphore().drainPermits();// 消耗掉所有的许可
             task.getSemaphore().release(1);// 新增一个许可
-            task.setState(ProgressStateEnum.STOP);
+            task.setState(TaskStateEnum.STOP);
         }
     }
 

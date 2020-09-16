@@ -8,6 +8,9 @@ import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.http.client.fluent.Executor;
+import org.apache.http.client.fluent.Request;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,23 +20,24 @@ import com.lhq.loader.bean.SysConfig;
 import com.lhq.loader.bean.Task;
 import com.lhq.loader.bean.Tile;
 import com.lhq.loader.commons.DownloadProgress;
-import com.lhq.loader.commons.consts.ProgressStateEnum;
+import com.lhq.loader.commons.consts.TaskStateEnum;
 import com.lhq.loader.commons.toolkit.SpringContextToolkit;
 import com.lhq.loader.controller.vo.DownloadParamVO;
 import com.lhq.loader.exception.BaseException;
 import com.lhq.loader.function.LngLatTrans;
 
 /**
- * 地图下载器
+ * 计算瓦片数量、瓦片地址，放到队列中让下载器下载
  * 
- * @author lhq
- *
+ * @author 灯火-lhq910523@sina.com
+ * @time 2020-09-16 13:50:38
  */
 public class MapServiceToolkit {
     private static final Logger logger = LoggerFactory.getLogger(MapServiceToolkit.class);
     private static ArrayBlockingQueue<DownFile> tileQueue;
-    private static ExecutorService downPool = null;
-
+    private static ExecutorService downTaskPool = null;
+    private static Executor executor = null;
+    
     private MapServiceToolkit() {
     }
 
@@ -41,7 +45,7 @@ public class MapServiceToolkit {
      * 计算下载的瓦片数量
      * 
      */
-    public static Long calculateCount(DownloadParamVO downloadParamVO, LngLatTrans transToolkit) {
+    public static long calcTileCount(DownloadParamVO downloadParamVO, LngLatTrans transToolkit) {
         // 提前创建对象，重复利用，下面的循环次数可能到达百万次甚至千万次，每次创建对象效率太低
         Tile tile1 = new Tile();
         Tile tile2 = new Tile();
@@ -63,19 +67,19 @@ public class MapServiceToolkit {
     }
 
     /**
-     * 开始下载瓦片
+     * 添加下载任务，计算瓦片地址，放入队列中等待下载器下载
      * 
      */
-    public static synchronized void startDownload(DownloadParamVO downloadParamVO, String baseUrl, IMapService mapService, LngLatTrans transToolkit) {
+    public static synchronized void addDownTask(DownloadParamVO downloadParamVO, String baseUrl, IMapService mapService, LngLatTrans transToolkit) {
         DownloadProgress downloadProgress = SpringContextToolkit.getBean(DownloadProgress.class);
         if (downloadProgress.downPoolFull()) {
-            throw new BaseException("下载器已满，请等其他下载任务结束或删除其他下载任务");
+            throw new BaseException("下载任务已满，请等其他下载任务结束或删除其他下载任务");
         }
 
-        downPool.execute(() -> {
-            Long count = mapService.calculateCount(downloadParamVO);
+        downTaskPool.execute(() -> {
+            long count = mapService.calculateCount(downloadParamVO);
             // 开启一个任务
-            downloadProgress.startTask(downloadParamVO.getId(), count);
+            downloadProgress.openTask(downloadParamVO.getId(), count);
 
             // 提前创建对象，重复利用，下面的循环次数可能到达百万次甚至千万次，每次创建对象效率太低
             Tile tile1 = new Tile();
@@ -95,7 +99,7 @@ public class MapServiceToolkit {
             String url;
             StringBuilder sb = new StringBuilder();
 
-            boolean useMongoStore = SpringContextToolkit.getBean(SysConfig.class).getMongoStore() == 1 ? true : false;
+            boolean useMongoStore = SpringContextToolkit.getBean(SysConfig.class).getMongoStore() == 1;
             outer: for (int zoom : zooms) {
                 // 经纬度转瓦片
                 transToolkit.trans(northwest, zoom, tile1);
@@ -120,9 +124,9 @@ public class MapServiceToolkit {
                         // 判断当前任务状态
                         Task task = downloadProgress.get(downloadParamVO.getId());
                         // 已停止的，直接跳出最外层循环，结束本次任务
-                        if (task.getState() == ProgressStateEnum.STOP) {
+                        if (task.getState() == TaskStateEnum.STOP) {
                             break outer;
-                        } else if (task.getState() == ProgressStateEnum.PAUSE) {
+                        } else if (task.getState() == TaskStateEnum.PAUSE) {
                             // 暂停中的，获取锁后在进行
                             try {
                                 task.getSemaphore().acquire();
@@ -152,6 +156,33 @@ public class MapServiceToolkit {
     }
 
     /**
+     * 下载瓦片
+     * 
+     * @param storeService
+     */
+    public static void downTile(IStoreService storeService) {
+        DownloadProgress downloadProgress = SpringContextToolkit.getBean(DownloadProgress.class);
+        while (true) {
+            try {
+                DownFile downFile = tileQueue.take();
+                try {
+                    if (!storeService.exsits(downFile.getFileName(), downFile.getMapType())) {
+                        byte[] content = executor.execute(Request.Get(downFile.getUrl()).connectTimeout(5000).socketTimeout(5000)).returnContent().asBytes();
+                        storeService.store(downFile.getFileName(), downFile.getMapType(), content);
+                    }
+                } catch (Exception e) {
+                    logger.info("{}下载失败:{}", downFile.getFileName(), downFile.getUrl());
+                    logger.error(e.getMessage(), e);
+                }
+                downloadProgress.addTaskCurrent(downFile.getThreadId(), 1L);
+            } catch (InterruptedException e) {
+                logger.error(e.getLocalizedMessage(), e);
+                Thread.currentThread().interrupt();
+            }
+        }
+    }
+
+    /**
      * 初始化队列
      * 
      * @param capacity
@@ -166,25 +197,33 @@ public class MapServiceToolkit {
      * 初始化线程池
      * @param downPoolSize
      */
-    public static synchronized void initDownPool(int downPoolSize) {
-        if(downPool == null) {
-            downPool = new ThreadPoolExecutor(downPoolSize, downPoolSize, 30, TimeUnit.SECONDS, 
+    public static synchronized void initDownTaskPool(int downPoolSize) {
+        if (downTaskPool == null) {
+            downTaskPool = new ThreadPoolExecutor(downPoolSize, downPoolSize, 30, TimeUnit.SECONDS, 
                     new LinkedBlockingQueue<>(10), 
                     new RejectedExecutionHandler() {
                         @Override
                         public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
-                            throw new BaseException("下载器已满，请等其他下载任务结束或删除其他下载任务");
+                            throw new BaseException("下载任务已满，请等其他下载任务结束或删除其他下载任务");
                         }
                     });
         }
     }
 
-    public static ArrayBlockingQueue<DownFile> getTileQueue() {
-        return tileQueue;
+    /**
+     * 初始化executor执行器
+     * 
+     * @param retryNum
+     */
+    public static synchronized void initExecuor(int retryNum) {
+        if(executor == null) {
+            executor = Executor.newInstance(
+                    HttpClientBuilder.create()
+                        .setRetryHandler((exception, executionCount, context) -> {
+                            return executionCount < retryNum;
+                        })
+                        .build());
+        }
     }
-
-    public static ExecutorService getDownPool() {
-        return downPool;
-    }
-
+    
 }

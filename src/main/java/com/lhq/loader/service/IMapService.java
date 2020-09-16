@@ -10,7 +10,7 @@ public interface IMapService {
      * @param downloadParamVO
      * @return
      */
-    Long calculateCount(DownloadParamVO downloadParamVO);
+    long calculateCount(DownloadParamVO downloadParamVO);
 	
     /**
      * 开始下载瓦片
